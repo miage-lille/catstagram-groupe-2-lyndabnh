@@ -1,39 +1,78 @@
-import { Loop, liftState } from 'redux-loop';
-import { compose } from 'redux';
-import { Actions } from './types/actions.type';
+import { Cmd, loop } from 'redux-loop'; // Correction ici
+import { Actions, FetchCatsCommit, FetchCatsRollback } from './types/actions.type';
+import { fetchCatsCommit, fetchCatsRollback } from './actions';
+import { Picture } from './types/picture.type'; // Correction de l'import
 
-export type State = unknown; // TODO : Update this type !
+// Définition du modèle (State)
+export type State = {
+  counter: number;
+  pictures: Picture[];
+  loading: boolean;
+  error?: string;
+  selectedPicture?: Picture | null;
+};
 
-export const defaultState = {}; // TODO : Update this value !
+// État initial
+export const defaultState: State = {
+  counter: 3, // Ne doit pas descendre sous 3
+  pictures: [],
+  loading: false,
+  selectedPicture: null,
+};
 
-export const reducer = (state: State | undefined, action: Actions): State | Loop<State> => {
-  if (!state) return defaultState; // mandatory by redux
+// Reducer avec gestion des actions Redux
+export const reducer = (state: State | undefined, action: Actions): State | ReturnType<typeof loop> => {
+  if (!state) return defaultState; // État initial
+
   switch (action.type) {
     case 'INCREMENT':
-      throw 'Not Implemented';
+      return { ...state, counter: state.counter + 1 };
+
     case 'DECREMENT':
-      throw 'Not Implemented';
-    case 'SELECT_PICTURE':
-      throw 'Not Implemented';
-    case 'CLOSE_MODAL':
-      throw 'Not Implemented';
+      return state.counter > 3
+        ? { ...state, counter: state.counter - 1 }
+        : state; // Empêche le compteur d'aller sous 3
+
     case 'FETCH_CATS_REQUEST':
-      throw 'Not Implemented';
+      return loop(
+        { ...state, loading: true, error: undefined },
+        Cmd.run(
+          async (): Promise<FetchCatsCommit | FetchCatsRollback> => {
+            try {
+              const response = await fetch(action.path, { method: action.method });
+              const data = await response.json();
+              return fetchCatsCommit(data.hits as Picture[]); // Correction ici
+            } catch (error) {
+              return fetchCatsRollback(error as Error);
+            }
+          },
+          {
+            successActionCreator: fetchCatsCommit, // Il faut que ça retourne une action
+            failActionCreator: fetchCatsRollback,
+          }
+        )
+      );
+
     case 'FETCH_CATS_COMMIT':
-      throw 'Not Implemented';
+      return { ...state, loading: false, pictures: action.payload };
+
     case 'FETCH_CATS_ROLLBACK':
-      throw 'Not Implemented';
+      return { ...state, loading: false, error: action.error.message };
+
+    case 'SELECT_PICTURE':
+      return { ...state, selectedPicture: action.picture };
+
+    case 'CLOSE_MODAL':
+      return { ...state, selectedPicture: null };
+
+    default:
+      return state;
   }
 };
 
-export const counterSelector = (state: State) => {
-  throw 'Not Implemented';
-};
-export const picturesSelector = (state: State) => {
-  throw 'Not Implemented';
-};
-export const getSelectedPicture = (state: State) => {
-  throw 'Not Implemented';
-};
+// Sélecteurs
+export const counterSelector = (state: State) => state.counter;
+export const picturesSelector = (state: State) => state.pictures;
+export const getSelectedPicture = (state: State) => state.selectedPicture;
 
-export default compose(liftState, reducer);
+export default reducer;
