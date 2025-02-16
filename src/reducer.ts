@@ -1,39 +1,95 @@
-import { Loop, liftState } from 'redux-loop';
-import { compose } from 'redux';
-import { Actions } from './types/actions.type';
+import { Cmd, loop } from 'redux-loop'; 
+import { Actions, FetchCatsCommit, FetchCatsRollback } from './types/actions.type';
+import { fetchCatsCommit, fetchCatsRequest, fetchCatsRollback } from './actions';
+import { Picture } from './types/picture.type'; 
 
-export type State = unknown; // TODO : Update this type !
 
-export const defaultState = {}; // TODO : Update this value !
+export type State = {
+  counter: number;
+  pictures: Picture[];
+  error?: string;
+  selectedPicture?: Picture | null;
+  loading: boolean;
+};
 
-export const reducer = (state: State | undefined, action: Actions): State | Loop<State> => {
-  if (!state) return defaultState; // mandatory by redux
+
+export const defaultState: State = {
+  counter: 0, 
+  pictures: [],
+  selectedPicture: null,
+  loading: false,
+};
+
+export const reducer = (state: State | undefined, action: Actions): State | ReturnType<typeof loop> => {
+  if (!state) return defaultState; 
+
   switch (action.type) {
     case 'INCREMENT':
-      throw 'Not Implemented';
-    case 'DECREMENT':
-      throw 'Not Implemented';
-    case 'SELECT_PICTURE':
-      throw 'Not Implemented';
-    case 'CLOSE_MODAL':
-      throw 'Not Implemented';
+      {const newCounter = state.counter + 1;
+      return loop(
+        { ...state, counter: newCounter },
+        Cmd.action(fetchCatsRequest(newCounter))
+      );
+    }
+    case 'DECREMENT':{
+      if (state.counter === 3) return state;
+      const newCounter = state.counter - 1;
+      return loop(
+        { ...state, counter: newCounter },
+        Cmd.action(fetchCatsRequest(newCounter))
+      );
+    }
     case 'FETCH_CATS_REQUEST':
-      throw 'Not Implemented';
-    case 'FETCH_CATS_COMMIT':
-      throw 'Not Implemented';
+      return loop(
+        { ...state, loading: true },
+        Cmd.run(fetchPictures, {
+          args: [action.path],
+          successActionCreator: fetchCatsCommit,
+          failActionCreator: fetchCatsRollback,
+        })
+      );
+    
+      case 'FETCH_CATS_COMMIT':
+        return { ...state, loading: false, pictures: action.payload.slice(0, state.counter), };
+      
+
     case 'FETCH_CATS_ROLLBACK':
-      throw 'Not Implemented';
+      return { ...state, loading: false, error: action.error.message };
+    case 'SELECT_PICTURE':
+      return { ...state, selectedPicture: action.picture };
+
+    case 'CLOSE_MODAL':
+      return { ...state, selectedPicture: null };
+
+    default:
+      return state;
   }
 };
 
-export const counterSelector = (state: State) => {
-  throw 'Not Implemented';
-};
-export const picturesSelector = (state: State) => {
-  throw 'Not Implemented';
-};
-export const getSelectedPicture = (state: State) => {
-  throw 'Not Implemented';
-};
+// Sélecteurs
+export const counterSelector = (state: State) => state.counter;
+export const picturesSelector = (state: State) => state.pictures;
+export const getSelectedPicture = (state: State) => state.selectedPicture;
 
-export default compose(liftState, reducer);
+export default reducer;
+
+async function fetchPictures(path: string): Promise<Picture[]> {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error('Erreur lors du chargement des images');
+  }
+  const data = await response.json();
+
+  
+  if (!Array.isArray(data.hits)) {
+    throw new Error('Invalid response format');
+  }
+
+  
+  return data.hits.map((hit: any) => ({
+    previewFormat: hit.previewURL,
+    webFormat: hit.webformatURL,
+    largeFormat: hit.largeImageURL,
+    author: hit.user,
+  }));
+}

@@ -31,15 +31,23 @@ const Image = styled.img`
   max-width: 700px;
 `;
 
+const Author = styled.p`
+  color: white;
+  text-align: center;
+  margin-top: 10px;
+`;
+
 interface ModalProps {
   largeFormat: string;
+  author: string;
   close(): void;
 }
 
-const Modal = ({ largeFormat, close }: ModalProps) => {
+const Modal = ({ largeFormat, author, close }: ModalProps) => {
   return (
     <Container>
       <Image src={largeFormat} />
+      <Author>Crédit : {author}</Author> 
       <Button onClick={close}>X</Button>
     </Container>
   );
@@ -47,7 +55,7 @@ const Modal = ({ largeFormat, close }: ModalProps) => {
 
 const portalRoot = document.getElementById('modal');
 
-const ModalPortal = ({ largeFormat, close }: ModalProps) =>
-  portalRoot ? ReactDOM.createPortal(<Modal largeFormat={largeFormat} close={close} />, portalRoot) : null;
+const ModalPortal = ({ largeFormat, author, close }: ModalProps) =>
+  portalRoot ? ReactDOM.createPortal(<Modal largeFormat={largeFormat} author={author} close={close} />, portalRoot) : null;
 
 export default ModalPortal;
