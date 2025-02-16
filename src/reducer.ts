@@ -16,6 +16,7 @@ export type State = {
 export const defaultState: State = {
   counter: 3, 
   pictures: fakePictures.slice(0, 3),
+  selectedPicture: null,
 };
 
 export const reducer = (state: State | undefined, action: Actions): State | ReturnType<typeof loop> => {
@@ -58,10 +59,10 @@ export const reducer = (state: State | undefined, action: Actions): State | Retu
       );
 
     case 'FETCH_CATS_COMMIT':
-      return { ...state, loading: false, pictures: action.payload };
+      return { ...state, pictures: action.payload };
 
     case 'FETCH_CATS_ROLLBACK':
-      return { ...state, loading: false, error: action.error.message };
+      return { ...state, error: action.error.message };
 
     case 'SELECT_PICTURE':
       return { ...state, selectedPicture: action.picture };

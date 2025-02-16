@@ -1,19 +1,19 @@
 import { Picture } from './types/picture.type';
 
-// Actions pour le compteur
+
 export type Increment = { type: 'INCREMENT' };
 export type Decrement = { type: 'DECREMENT' };
 
-// Actions pour la gestion des images
+
 export type SelectPicture = { type: 'SELECT_PICTURE'; picture: Picture };
 export type CloseModal = { type: 'CLOSE_MODAL' };
 
-// Actions pour récupérer les images de l'API
+
 export type FetchCatsRequest = { type: 'FETCH_CATS_REQUEST'; method: 'GET'; path: string };
 export type FetchCatsCommit = { type: 'FETCH_CATS_COMMIT'; payload: Picture[] }; // Correction ici
 export type FetchCatsRollback = { type: 'FETCH_CATS_ROLLBACK'; error: Error };
 
-// Liste des actions disponibles
+
 export type Actions =
   | Increment
   | Decrement
