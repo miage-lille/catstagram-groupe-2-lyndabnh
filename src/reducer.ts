@@ -1,7 +1,7 @@
-import { Cmd, loop } from 'redux-loop'; // Correction ici
+import { Cmd, loop } from 'redux-loop'; 
 import { Actions, FetchCatsCommit, FetchCatsRollback } from './types/actions.type';
-import { fetchCatsCommit, fetchCatsRollback } from './actions';
-import { Picture } from './types/picture.type'; // Correction de l'import
+import { fetchCatsCommit, fetchCatsRequest, fetchCatsRollback } from './actions';
+import { Picture } from './types/picture.type'; 
 import fakePictures from './fake-datas.json'; 
 
 
@@ -17,6 +17,7 @@ export const defaultState: State = {
   counter: 3, 
   pictures: fakePictures.slice(0, 3),
   selectedPicture: null,
+  loading: false,
 };
 
 export const reducer = (state: State | undefined, action: Actions): State | ReturnType<typeof loop> => {
@@ -24,46 +25,36 @@ export const reducer = (state: State | undefined, action: Actions): State | Retu
 
   switch (action.type) {
     case 'INCREMENT':
-      return {
-        ...state,
-        counter: state.counter + 1,
-        pictures: fakePictures.slice(0, state.counter + 1),
-      };
-    case 'DECREMENT':
-      return state.counter > 3
-      ? {
-        ...state,
-        counter: state.counter - 1,
-        pictures: fakePictures.slice(0, state.counter - 1), // Mettre à jour les images en fonction du compteur
-      }
-    : state;
-
+      {const newCounter = state.counter + 1;
+      return loop(
+        { ...state, counter: newCounter },
+        Cmd.action(fetchCatsRequest(newCounter))
+      );
+    }
+    case 'DECREMENT':{
+      if (state.counter === 3) return state;
+      const newCounter = state.counter - 1;
+      return loop(
+        { ...state, counter: newCounter },
+        Cmd.action(fetchCatsRequest(newCounter))
+      );
+    }
     case 'FETCH_CATS_REQUEST':
       return loop(
-        { ...state, loading: true, error: undefined },
-        Cmd.run(
-          async (): Promise<FetchCatsCommit | FetchCatsRollback> => {
-            try {
-              const response = await fetch(action.path, { method: action.method });
-              const data = await response.json();
-              return fetchCatsCommit(data.hits as Picture[]); // Correction ici
-            } catch (error) {
-              return fetchCatsRollback(error as Error);
-            }
-          },
-          {
-            successActionCreator: fetchCatsCommit, // Il faut que ça retourne une action
-            failActionCreator: fetchCatsRollback,
-          }
-        )
+        { ...state, loading: true },
+        Cmd.run(fetchPictures, {
+          args: [action.path],
+          successActionCreator: fetchCatsCommit,
+          failActionCreator: fetchCatsRollback,
+        })
       );
-
-    case 'FETCH_CATS_COMMIT':
-      return { ...state, pictures: action.payload };
+    
+      case 'FETCH_CATS_COMMIT':
+        return { ...state, loading: false, pictures: action.payload };
+      
 
     case 'FETCH_CATS_ROLLBACK':
-      return { ...state, error: action.error.message };
-
+      return { ...state, error: action.error.message };return { ...state, loading: false, error: action.error.message };
     case 'SELECT_PICTURE':
       return { ...state, selectedPicture: action.picture };
 
@@ -81,3 +72,17 @@ export const picturesSelector = (state: State) => state.pictures;
 export const getSelectedPicture = (state: State) => state.selectedPicture;
 
 export default reducer;
+
+async function fetchPictures(path: string): Promise<Picture[]> {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error('Erreur lors du chargement des images');
+  }
+  const data = await response.json();
+  return data.hits.map((hit: any) => ({
+    previewFormat: hit.previewURL,
+    webFormat: hit.webformatURL,
+    largeFormat: hit.largeImageURL,
+    author: hit.user,
+  }));
+}
