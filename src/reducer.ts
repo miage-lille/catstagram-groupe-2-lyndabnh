@@ -10,6 +10,7 @@ export type State = {
   pictures: Picture[];
   error?: string;
   selectedPicture?: Picture | null;
+  loading: boolean;
 };
 
 
@@ -54,7 +55,7 @@ export const reducer = (state: State | undefined, action: Actions): State | Retu
       
 
     case 'FETCH_CATS_ROLLBACK':
-      return { ...state, error: action.error.message };return { ...state, loading: false, error: action.error.message };
+      return { ...state, loading: false, error: action.error.message };
     case 'SELECT_PICTURE':
       return { ...state, selectedPicture: action.picture };
 
