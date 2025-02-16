@@ -30,7 +30,7 @@ export const decrement = (): Decrement => ({ type: 'DECREMENT' });
 export const fetchCatsRequest = (counter: number): FetchCatsRequest => ({
   type: 'FETCH_CATS_REQUEST',
   method: 'GET',
-  path: 'https://pixabay.com/api/?key=48881859-63ab7a87b00b7bb45119fe6c4&per_page=10&q=cat', 
+  path: 'https://pixabay.com/api/?key=48881859-63ab7a87b00b7bb45119fe6c4&per_page=${counter}&q=cat', 
 });
 
 export const fetchCatsCommit = (payload: Picture[]): FetchCatsCommit => ({ type: 'FETCH_CATS_COMMIT', payload });

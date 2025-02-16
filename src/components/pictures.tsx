@@ -55,6 +55,7 @@ const Pictures = () => {
        {selectedPicture && (
         <ModalPortal
           largeFormat={selectedPicture.largeFormat}
+          author={selectedPicture.author}
           close={() => dispatch(closeModal())}
         />
       )}

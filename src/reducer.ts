@@ -15,8 +15,8 @@ export type State = {
 
 
 export const defaultState: State = {
-  counter: 3, 
-  pictures: fakePictures.slice(0, 3),
+  counter: 0, 
+  pictures: [],
   selectedPicture: null,
   loading: false,
 };
@@ -51,7 +51,7 @@ export const reducer = (state: State | undefined, action: Actions): State | Retu
       );
     
       case 'FETCH_CATS_COMMIT':
-        return { ...state, loading: false, pictures: action.payload };
+        return { ...state, loading: false, pictures: action.payload.slice(0, state.counter), };
       
 
     case 'FETCH_CATS_ROLLBACK':
@@ -80,6 +80,13 @@ async function fetchPictures(path: string): Promise<Picture[]> {
     throw new Error('Erreur lors du chargement des images');
   }
   const data = await response.json();
+
+  
+  if (!Array.isArray(data.hits)) {
+    throw new Error('Invalid response format');
+  }
+
+  
   return data.hits.map((hit: any) => ({
     previewFormat: hit.previewURL,
     webFormat: hit.webformatURL,
