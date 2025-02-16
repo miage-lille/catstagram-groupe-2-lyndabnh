@@ -2,7 +2,6 @@ import { Cmd, loop } from 'redux-loop';
 import { Actions, FetchCatsCommit, FetchCatsRollback } from './types/actions.type';
 import { fetchCatsCommit, fetchCatsRequest, fetchCatsRollback } from './actions';
 import { Picture } from './types/picture.type'; 
-import fakePictures from './fake-datas.json'; 
 
 
 export type State = {
