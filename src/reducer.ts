@@ -2,36 +2,40 @@ import { Cmd, loop } from 'redux-loop'; // Correction ici
 import { Actions, FetchCatsCommit, FetchCatsRollback } from './types/actions.type';
 import { fetchCatsCommit, fetchCatsRollback } from './actions';
 import { Picture } from './types/picture.type'; // Correction de l'import
+import fakePictures from './fake-datas.json'; 
 
-// Définition du modèle (State)
+
 export type State = {
   counter: number;
   pictures: Picture[];
-  loading: boolean;
   error?: string;
   selectedPicture?: Picture | null;
 };
 
-// État initial
+
 export const defaultState: State = {
-  counter: 3, // Ne doit pas descendre sous 3
-  pictures: [],
-  loading: false,
-  selectedPicture: null,
+  counter: 3, 
+  pictures: fakePictures.slice(0, 3),
 };
 
-// Reducer avec gestion des actions Redux
 export const reducer = (state: State | undefined, action: Actions): State | ReturnType<typeof loop> => {
-  if (!state) return defaultState; // État initial
+  if (!state) return defaultState; 
 
   switch (action.type) {
     case 'INCREMENT':
-      return { ...state, counter: state.counter + 1 };
-
+      return {
+        ...state,
+        counter: state.counter + 1,
+        pictures: fakePictures.slice(0, state.counter + 1),
+      };
     case 'DECREMENT':
       return state.counter > 3
-        ? { ...state, counter: state.counter - 1 }
-        : state; // Empêche le compteur d'aller sous 3
+      ? {
+        ...state,
+        counter: state.counter - 1,
+        pictures: fakePictures.slice(0, state.counter - 1), // Mettre à jour les images en fonction du compteur
+      }
+    : state;
 
     case 'FETCH_CATS_REQUEST':
       return loop(
